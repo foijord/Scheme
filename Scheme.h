@@ -75,8 +75,8 @@ namespace scm {
 		Env() = default;
 		~Env() = default;
 
-		explicit Env(std::unordered_map<std::string, std::any> inner)
-			: inner(inner)
+		explicit Env(std::unordered_map<std::string, std::any> self)
+			: self(self)
 		{}
 
 		Env(const std::any& parm, const List& args, env_ptr outer)
@@ -85,28 +85,28 @@ namespace scm {
 			if (parm.type() == typeid(lst_ptr)) {
 				auto parms = std::any_cast<lst_ptr>(parm);
 				for (size_t i = 0; i < parms->size(); i++) {
-					auto sym = std::any_cast<Symbol>((*parms)[i]);
-					this->inner[sym] = args[i];
+					auto sym = std::any_cast<Symbol>(parms->at(i));
+					self[sym] = args[i];
 				}
 			}
 			else {
 				auto sym = std::any_cast<Symbol>(parm);
-				this->inner[sym] = args;
+				self[sym] = args;
 			}
 		}
 
 		std::any get(Symbol sym)
 		{
-			if (this->inner.contains(sym)) {
-				return this->inner.at(sym);
+			if (self.contains(sym)) {
+				return self.at(sym);
 			}
 			if (this->outer) {
-				return this->outer->get(sym);
+				return outer->get(sym);
 			}
 			throw std::runtime_error("undefined symbol: " + sym);
 		}
 
-		std::unordered_map<std::string, std::any> inner;
+		std::unordered_map<std::string, std::any> self;
 		env_ptr outer{ nullptr };
 	};
 
@@ -161,11 +161,20 @@ namespace scm {
 			return os << std::any_cast<Symbol>(exp);
 		}
 		if (exp.type() == typeid(String)) {
-			return os << std::any_cast<String>(exp);
+			return os << "\"" << std::any_cast<String>(exp) << "\"";
 		}
 		if (exp.type() == typeid(Boolean)) {
 			return os << (std::any_cast<Boolean>(exp) ? "true" : "false");
 		}
+		if (exp.type() == typeid(Define)) {
+			auto define = std::any_cast<Define>(exp);
+			return os << "(define " << define.sym << " " << define.exp << ")";
+		}
+		if (exp.type() == typeid(Quote)) {
+			auto quote = std::any_cast<Quote>(exp);
+			return os << "(quote " << quote.exp << ")";
+		}
+
 		return os << exp.type().name();
 	};
 
@@ -190,7 +199,7 @@ namespace scm {
 			}
 			if (exp.type() == typeid(Define)) {
 				auto define = std::any_cast<Define>(exp);
-				return env->inner[define.sym] = eval(define.exp, env);
+				return env->self[define.sym] = eval(define.exp, env);
 			}
 			if (exp.type() == typeid(Lambda)) {
 				auto lambda = std::any_cast<Lambda>(exp);
@@ -267,16 +276,16 @@ namespace scm {
 			if (list[0].type() == typeid(Symbol)) {
 				auto token = std::any_cast<Symbol>(list[0]);
 
-				if (token == "<" || token == ">" || token == "<=" || token == ">=" || token == "==") {
-					if (list.size() != 3) {
-						throw std::invalid_argument("wrong number of arguments to " + token);
-					}
-				}
 				if (token == "quote") {
 					if (list.size() != 2) {
 						throw std::invalid_argument("wrong number of arguments to quote");
 					}
 					return Quote{ .exp = list[1] };
+				}
+				if (token == "<" || token == ">" || token == "<=" || token == ">=" || token == "==") {
+					if (list.size() != 3) {
+						throw std::invalid_argument("wrong number of arguments to " + token);
+					}
 				}
 				if (token == "if") {
 					if (list.size() != 4) {
@@ -343,7 +352,7 @@ namespace scm {
 		x3::rule<struct number_class, Number> number_ = "number";
 		x3::rule<struct string_class, String> string_ = "string";
 		x3::rule<struct value_class, value> value_ = "value";
-		x3::rule<struct list_class, std::vector<value> > list_ = "list";
+		x3::rule<struct list_class, std::vector<value>> list_ = "list";
 		x3::rule<struct multi_string_class, String> multi_string_ = "multi_string";
 
 		struct bool_table : x3::symbols<bool> {

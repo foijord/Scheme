@@ -24,6 +24,7 @@ int main(int, char* [])
 {
 	std::vector<bool> tests{
 		test("(quote ())", "()"),
+		test("(quote (define a 1))", "(define a 1)"),
 		test("(begin (define a 1) (+ 1 2 3))", "6"),
 		test("a", "1"),
 		test("(quote (testing 1 (2) -3.14e+159))", "(testing 1 (2) -3.14e+159)"),
@@ -64,7 +65,6 @@ int main(int, char* [])
 		}
 		catch (std::exception& e) {
 			std::cerr << e.what() << std::endl;
-			return EXIT_FAILURE;
 		}
 	}
 
