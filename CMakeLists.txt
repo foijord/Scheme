@@ -4,6 +4,10 @@ project(Scheme LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+if(WIN32)
+	add_compile_options(/W3 /WX)
+endif(WIN32)
+
 find_package(Boost REQUIRED)
 
 include_directories(
@@ -12,4 +16,4 @@ include_directories(
 
 add_compile_definitions($<$<CONFIG:Debug>:DEBUG>)
 
-add_executable(repl Repl.cpp Scheme.h)
+add_executable(Repl Repl.cpp Scheme.h)
