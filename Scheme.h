@@ -76,7 +76,7 @@ namespace scm {
 		~Env() = default;
 
 		explicit Env(std::unordered_map<std::string, std::any> self)
-			: self(self)
+			: self(std::move(self))
 		{}
 
 		Env(const std::any& parm, const List& args, env_ptr outer)
@@ -355,7 +355,7 @@ namespace scm {
 		x3::rule<struct list_class, std::vector<value>> list_ = "list";
 		x3::rule<struct multi_string_class, String> multi_string_ = "multi_string";
 
-		struct bool_table : x3::symbols<bool> {
+		struct bool_table : x3::symbols<Boolean> {
 			bool_table() {
 				add("true", true) ("false", false);
 			}
@@ -377,9 +377,8 @@ namespace scm {
 
 		BOOST_SPIRIT_DEFINE(value_, number_, string_, multi_string_, symbol_, list_)
 
-			const auto entry_point = x3::skip(x3::space)[value_];
+		const auto entry_point = x3::skip(x3::space)[value_];
 	}
-
 
 	template <typename Container>
 	std::any read(const Container& input)
