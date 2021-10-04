@@ -391,6 +391,45 @@ namespace scm {
 		}
 		throw std::runtime_error("Parse failed, remaining input: " + std::string(std::begin(input), std::end(input)));
 	}
+
+	template <typename ReturnType, typename InputType>
+	std::vector<ReturnType> make_vector(const scm::List& lst)
+	{
+		std::vector<ReturnType> values(lst.size());
+		for (size_t i = 0; i < lst.size(); i++) {
+			if (lst[i].type() != typeid(InputType)) {
+				throw std::invalid_argument("Invalid argument to make_vector");
+			}
+			auto value = std::any_cast<InputType>(lst[i]);
+			values[i] = static_cast<ReturnType>(value);
+		}
+		return values;
+	};
+
+	template <typename BaseType, typename SubType, typename... Arg, std::size_t... i>
+	std::shared_ptr<BaseType> make_shared_object_impl(const List& lst, std::index_sequence<i...>)
+	{
+		return std::make_shared<SubType>(std::any_cast<Arg>(lst[i])...);
+	}
+
+	template <typename BaseType, typename SubType, typename... Arg>
+	std::shared_ptr<BaseType> make_shared_object(const List& lst)
+	{
+		return make_shared_object_impl<BaseType, SubType, Arg...>(lst, std::index_sequence_for<Arg...>{});
+	}
+
+	template <typename Type, typename... Arg, std::size_t... i>
+	Type make_object_impl(const List& lst, std::index_sequence<i...>)
+	{
+		return Type(std::any_cast<Arg>(lst[i])...);
+	}
+
+	template <typename Type, typename... Arg>
+	Type make_object(const List& lst)
+	{
+		return make_object_impl<Type, Arg...>(lst, std::index_sequence_for<Arg...>{});
+	}
+
 }
 
 using scm::operator<<;
