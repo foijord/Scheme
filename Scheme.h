@@ -377,7 +377,7 @@ namespace scm {
 
 		BOOST_SPIRIT_DEFINE(value_, number_, string_, multi_string_, symbol_, list_)
 
-		const auto entry_point = x3::skip(x3::space)[value_];
+			const auto entry_point = x3::skip(x3::space)[value_];
 	}
 
 	template <typename Container>
@@ -392,18 +392,16 @@ namespace scm {
 		throw std::runtime_error("Parse failed, remaining input: " + std::string(std::begin(input), std::end(input)));
 	}
 
-	template <typename ReturnType, typename InputType>
-	std::vector<ReturnType> make_vector(const scm::List& lst)
+	template <typename VectorType, typename ReturnType, typename InputType>
+	VectorType make_vector(const scm::List& lst)
 	{
 		std::vector<ReturnType> values(lst.size());
-		for (size_t i = 0; i < lst.size(); i++) {
-			if (lst[i].type() != typeid(InputType)) {
-				throw std::invalid_argument("Invalid argument to make_vector");
-			}
-			auto value = std::any_cast<InputType>(lst[i]);
-			values[i] = static_cast<ReturnType>(value);
-		}
-		return values;
+		std::transform(lst.begin(), lst.end(), values.begin(),
+			[](auto& exp) {
+				auto value = std::any_cast<InputType>(exp);
+				return static_cast<ReturnType>(value);
+			});
+		return VectorType(values);
 	};
 
 	template <typename BaseType, typename SubType, typename... Arg, std::size_t... i>
