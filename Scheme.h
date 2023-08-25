@@ -35,8 +35,7 @@ namespace scm {
 	std::any read(const Container& input);
 
 	struct Symbol : public std::string {
-		Symbol() = default;
-		explicit Symbol(const String& s) : std::string(s) {}
+		using std::string::string;
 	};
 
 	struct If {
@@ -211,8 +210,7 @@ namespace scm {
 			}
 			if (exp.type() == typeid(Import)) {
 				auto import = std::any_cast<Import>(exp);
-				std::any exp = read(import.code);
-				return eval(exp, env);
+				return eval(read(import.code), env);
 			}
 			if (exp.type() == typeid(If)) {
 				auto if_ = std::any_cast<If>(exp);
